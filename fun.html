@@ -1,24 +1,265 @@
-<body>
-    <h1>Let's play Tic-Tac-Toe!</h1>
-    <h2><i>Functional programming</i></h2>
-    <table class="board">
-        <tr>
-            <td class="tile"></td>
-            <td class="tile"></td>
-            <td class="tile"></td>
-        </tr>
-        <tr>
-            <td class="tile"></td>
-            <td class="tile"></td>
-            <td class="tile"></td>
-        </tr>
-        <tr>
-            <td class="tile"></td>
-            <td class="tile"></td>
-            <td class="tile"></td>
-        </tr>
-    </table>
-    <br />
-    <h2 id="announcement"> </h2>
-    <button id="reset">Reset</button>
-</body>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="styles.css" />
+
+    <title>❌⭕ Tic-Tac-Toe: Functional</title>
+
+    <style>
+      #game {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        display: grid;
+        grid-template-columns: repeat(3, auto);
+      }
+
+      .grid-cell {
+        border: 1px solid #000;
+        width: 100px;
+        height: 100px;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 45px;
+      }
+
+      .grid-cell:not(.disabled):hover {
+        background: #eee;
+      }
+
+      .grid-cell:nth-child(-n + 3) {
+        border-top: none;
+      }
+
+      .grid-cell:nth-child(3n + 1) {
+        border-left: none;
+      }
+
+      .grid-cell:nth-child(3n + 3) {
+        border-right: none;
+      }
+
+      .grid-cell:nth-last-of-type(-n + 3) {
+        border-bottom: none;
+      }
+
+      .disabled {
+        cursor: not-allowed;
+      }
+
+      .x::after {
+        content: "❌";
+      }
+
+      .o::after {
+        content: "⭕";
+      }
+
+      .game-over {
+        display: none;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        box-shadow: rgb(0 0 0 / 50%) 0 0 0 9999px;
+      }
+
+      .game-over-text {
+        position: absolute;
+        top: -200px;
+        font-size: 60px;
+        font-family: sans-serif;
+        font-weight: bold;
+        text-align: center;
+        transform: translateX(-30%);
+        -webkit-text-stroke: 1px black;
+        color: white;
+        text-shadow: 3px 3px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000,
+          -1px 1px 0 #000, 1px 1px 0 #000;
+      }
+
+      .visible {
+        display: block;
+      }
+
+      .turn {
+        position: absolute;
+        top: 15%;
+        width: 100%;
+        flex: auto;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        font-family: Arial, Helvetica, sans-serif;
+        text-shadow: 1px 1px red;
+      }
+
+      .title-container {
+        position: relative;
+        width: 100%;
+        flex: auto;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .title {
+        position: relative;
+        flex: auto;
+        text-align: center;
+        font-family: Arial, Helvetica, sans-serif;
+        border: 2px black solid;
+        box-shadow: 2px 2px red;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="title-container">
+      <h1 class="title">❌⭕ Tic-Tac-Toe: Functional</h1>
+    </div>
+    <h1 class="turn">X starts</h1>
+
+    <div id="game">
+      <div class="grid-cell" data-value="0"></div>
+      <div class="grid-cell" data-value="1"></div>
+      <div class="grid-cell" data-value="2"></div>
+      <div class="grid-cell" data-value="3"></div>
+      <div class="grid-cell" data-value="4"></div>
+      <div class="grid-cell" data-value="5"></div>
+      <div class="grid-cell" data-value="6"></div>
+      <div class="grid-cell" data-value="7"></div>
+      <div class="grid-cell" data-value="8"></div>
+    </div>
+    <div class="game-over">
+      <span class="game-over-text"></span>
+      <button class="restart">Restart</button>
+    </div>
+
+    <script>
+      // Define the turn, values for each player, and the winning states
+      const game = {
+        xTurn: true,
+        xState: [],
+        oState: [],
+
+        winningStates: [
+          // Rows
+          ["0", "1", "2"],
+          ["3", "4", "5"],
+          ["6", "7", "8"],
+
+          // Columns
+          ["0", "3", "6"],
+          ["1", "4", "7"],
+          ["2", "5", "8"],
+
+          // Diagonal
+          ["0", "4", "8"],
+          ["2", "4", "6"],
+        ],
+      };
+
+      // Very obvious use of a mutable state, but I promise I am trying my best :(
+      let currentGame = game;
+
+      document.addEventListener("click", (event) => {
+        const target = event.target;
+        const isCell = target.classList.contains("grid-cell");
+        const isDisabled = target.classList.contains("disabled");
+
+        // Check if this is something that can be used for the turn
+        if (isCell && !isDisabled) {
+          const cellValue = target.dataset.value;
+
+          // The state is an array that holds the cell values selected, so in the OOP, this state is used instead of produced
+          currentGame.xTurn
+            ? (currentGame = addToXTiles(currentGame, cellValue))
+            : (currentGame = addToOTiles(currentGame, cellValue));
+
+          // Disables the square and adds the x or o to the class name
+          target.classList.add("disabled");
+          target.classList.add(currentGame.xTurn ? "x" : "o");
+
+          // If all cells are disabled, then its draw
+          checkDraw();
+
+          // Check the current game to see if there is a win and change turn
+          checkWin(currentGame);
+
+          currentGame = changeTurn(currentGame);
+        }
+      });
+
+      document.querySelector(".restart").addEventListener("click", () => {
+        document.querySelector(".game-over").classList.remove("visible");
+        document.querySelectorAll(".grid-cell").forEach((cell) => {
+          cell.classList.remove("disabled", "x", "o");
+        });
+
+        // Reset the state
+        currentGame = restart(currentGame);
+        document.querySelector(".turn").textContent = "X starts";
+      });
+
+      // Use game as a parameter to return a modified data structure
+      function addToXTiles(gameIn, cellSelected) {
+        gameIn.xState.push(cellSelected);
+        return gameIn;
+      }
+
+      function addToOTiles(gameIn, cellSelected) {
+        gameIn.oState.push(cellSelected);
+        return gameIn;
+      }
+
+      function restart(gameIn) {
+        gameIn.xTurn = true;
+        gameIn.xState = [];
+        gameIn.oState = [];
+        return gameIn;
+      }
+
+      function checkDraw() {
+        if (!document.querySelectorAll(".grid-cell:not(.disabled)").length) {
+          document.querySelector(".game-over").classList.add("visible");
+          document.querySelector(".game-over-text").textContent = "Draw!";
+        }
+      }
+
+      function checkWin(gameIn) {
+        gameIn.winningStates.forEach((winningState) => {
+          const xWins = winningState.every((state) =>
+            gameIn.xState.includes(state)
+          );
+          const oWins = winningState.every((state) =>
+            gameIn.oState.includes(state)
+          );
+
+          // Modify the DOM appropriately
+          if (xWins || oWins) {
+            document
+              .querySelectorAll(".grid-cell")
+              .forEach((cell) => cell.classList.add("disabled"));
+            document.querySelector(".game-over").classList.add("visible");
+            document.querySelector(".game-over-text").textContent = xWins
+              ? "X wins!"
+              : "O wins!";
+          }
+        });
+      }
+
+      function changeTurn(gameIn) {
+        gameIn.xTurn = !gameIn.xTurn;
+        document.querySelector(".turn").textContent = gameIn.xTurn
+          ? "X's turn"
+          : "O's turn";
+        return gameIn;
+      }
+    </script>
+  </body>
+</html>

@@ -1,29 +1,229 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link rel="stylesheet" href="styles.css" />
-        <script src="2bembedded.js" defer></script>
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="styles.css" />
 
-        <title>❌⭕ Tic-Tac-Toe</title>
-    </head>
-    <body>
-        <div id="game">
-            <div class="grid-cell" data-value="0"></div>
-            <div class="grid-cell" data-value="1"></div>
-            <div class="grid-cell" data-value="2"></div>
-            <div class="grid-cell" data-value="3"></div>
-            <div class="grid-cell" data-value="4"></div>
-            <div class="grid-cell" data-value="5"></div>
-            <div class="grid-cell" data-value="6"></div>
-            <div class="grid-cell" data-value="7"></div>
-            <div class="grid-cell" data-value="8"></div>
-        </div>
-        <div class="game-over">
-            <span class="game-over-text"></span>
-            <button class="restart">Restart</button>
-        </div>
-    </body>
+    <title>❌⭕ Tic-Tac-Toe: Object Oriented</title>
+
+    <style>
+      #game {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        display: grid;
+        grid-template-columns: repeat(3, auto);
+      }
+
+      .grid-cell {
+        border: 1px solid #000;
+        width: 100px;
+        height: 100px;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 45px;
+      }
+
+      .grid-cell:not(.disabled):hover {
+        background: #eee;
+      }
+
+      .grid-cell:nth-child(-n + 3) {
+        border-top: none;
+      }
+
+      .grid-cell:nth-child(3n + 1) {
+        border-left: none;
+      }
+
+      .grid-cell:nth-child(3n + 3) {
+        border-right: none;
+      }
+
+      .grid-cell:nth-last-of-type(-n + 3) {
+        border-bottom: none;
+      }
+
+      .disabled {
+        cursor: not-allowed;
+      }
+
+      .x::after {
+        content: "❌";
+      }
+
+      .o::after {
+        content: "⭕";
+      }
+
+      .game-over {
+        display: none;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        box-shadow: rgb(0 0 0 / 50%) 0 0 0 9999px;
+      }
+
+      .game-over-text {
+        position: absolute;
+        top: -200px;
+        font-size: 60px;
+        font-family: sans-serif;
+        font-weight: bold;
+        text-align: center;
+        transform: translateX(-30%);
+        -webkit-text-stroke: 1px black;
+        color: white;
+        text-shadow: 3px 3px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000,
+          -1px 1px 0 #000, 1px 1px 0 #000;
+      }
+
+      .visible {
+        display: block;
+      }
+
+      .turn {
+        position: absolute;
+        top: 15%;
+        width: 100%;
+        flex: auto;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        font-family: Arial, Helvetica, sans-serif;
+        text-shadow: 1px 1px red;
+      }
+
+      .title-container {
+        position: relative;
+        width: 100%;
+        flex: auto;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .title {
+        position: relative;
+        flex: auto;
+        text-align: center;
+        font-family: Arial, Helvetica, sans-serif;
+        border: 2px black solid;
+        box-shadow: 2px 2px red;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="title-container"><h1 class="title">❌⭕ Tic-Tac-Toe: Object Oriented</h1></div>
+    <h1 class="turn">X starts</h1>
+
+    <div id="game">
+      <div class="grid-cell" data-value="0"></div>
+      <div class="grid-cell" data-value="1"></div>
+      <div class="grid-cell" data-value="2"></div>
+      <div class="grid-cell" data-value="3"></div>
+      <div class="grid-cell" data-value="4"></div>
+      <div class="grid-cell" data-value="5"></div>
+      <div class="grid-cell" data-value="6"></div>
+      <div class="grid-cell" data-value="7"></div>
+      <div class="grid-cell" data-value="8"></div>
+    </div>
+    <div class="game-over">
+      <span class="game-over-text"></span>
+      <button class="restart">Restart</button>
+    </div>
+
+    <script>
+      // Define the turn, values for each player, and the winning states
+      const game = {
+        xTurn: true,
+        xState: [],
+        oState: [],
+        winningStates: [
+          // Rows
+          ["0", "1", "2"],
+          ["3", "4", "5"],
+          ["6", "7", "8"],
+
+          // Columns
+          ["0", "3", "6"],
+          ["1", "4", "7"],
+          ["2", "5", "8"],
+
+          // Diagonal
+          ["0", "4", "8"],
+          ["2", "4", "6"],
+        ],
+      };
+
+      document.addEventListener("click", (event) => {
+        const target = event.target;
+        const isCell = target.classList.contains("grid-cell");
+        const isDisabled = target.classList.contains("disabled");
+
+        // Check if this is something that can be used for the turn
+        if (isCell && !isDisabled) {
+          const cellValue = target.dataset.value;
+
+          // The state is an array that holds the cell values selected, so in the OOP, this state is used instead of produced
+          game.xTurn === true
+            ? game.xState.push(cellValue)
+            : game.oState.push(cellValue);
+
+          // Disables the square and adds the x or o to the class name
+          target.classList.add("disabled");
+          target.classList.add(game.xTurn ? "x" : "o");
+
+          game.xTurn = !game.xTurn;
+
+          document.querySelector(".turn").textContent = game.xTurn
+            ? "X's turn"
+            : "O's turn";
+
+          // If all cells are disabled, then its draw
+          if (!document.querySelectorAll(".grid-cell:not(.disabled)").length) {
+            document.querySelector(".game-over").classList.add("visible");
+            document.querySelector(".game-over-text").textContent = "Draw!";
+          }
+
+          game.winningStates.forEach((winningState) => {
+            const xWins = winningState.every((state) =>
+              game.xState.includes(state)
+            );
+            const oWins = winningState.every((state) =>
+              game.oState.includes(state)
+            );
+
+            if (xWins || oWins) {
+              document
+                .querySelectorAll(".grid-cell")
+                .forEach((cell) => cell.classList.add("disabled"));
+              document.querySelector(".game-over").classList.add("visible");
+              document.querySelector(".game-over-text").textContent = xWins
+                ? "X wins!"
+                : "O wins!";
+            }
+          });
+        }
+      });
+
+      document.querySelector(".restart").addEventListener("click", () => {
+        document.querySelector(".game-over").classList.remove("visible");
+        document.querySelectorAll(".grid-cell").forEach((cell) => {
+          cell.classList.remove("disabled", "x", "o");
+        });
+
+        // Reset the state
+        game.xTurn = true;
+        game.xState = [];
+        game.oState = [];
+        document.querySelector(".turn").textContent = "X starts";
+      });
+    </script>
+  </body>
 </html>

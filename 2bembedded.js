@@ -1,3 +1,4 @@
+// Define the turn, values for each player, and the winning states
 const game = {
   xTurn: true,
   xState: [],
@@ -27,10 +28,12 @@ document.addEventListener('click', event => {
   if (isCell && !isDisabled) {
       const cellValue = target.dataset.value
 
+      // The state is an array that holds the cell values selected, so in the OOP, this state is used instead of produced
       game.xTurn === true
           ? game.xState.push(cellValue)
           : game.oState.push(cellValue)
 
+    // Disables the square and adds the x or o to the class name
       target.classList.add('disabled')
       target.classList.add(game.xTurn ? 'x' : 'o')
 
@@ -63,6 +66,7 @@ document.querySelector('.restart').addEventListener('click', () => {
       cell.classList.remove('disabled', 'x', 'o')
   })
 
+  // Reset the state
   game.xTurn = true
   game.xState = []
   game.oState = []

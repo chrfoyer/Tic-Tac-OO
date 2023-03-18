@@ -188,14 +188,10 @@
           // If all cells are disabled, then its draw
           checkDraw();
 
-          // Check the current game to see if there is a win
+          // Check the current game to see if there is a win and change turn
           checkWin(currentGame);
 
-          // Change the turn in an awful state mutation
-          currentGame.xTurn = !currentGame.xTurn;
-          document.querySelector(".turn").textContent = game.xTurn
-            ? "X's turn"
-            : "O's turn";
+          currentGame = changeTurn(currentGame);
         }
       });
 
@@ -255,6 +251,14 @@
               : "O wins!";
           }
         });
+      }
+
+      function changeTurn(gameIn) {
+        gameIn.xTurn = !gameIn.xTurn;
+        document.querySelector(".turn").textContent = gameIn.xTurn
+          ? "X's turn"
+          : "O's turn";
+        return gameIn;
       }
     </script>
   </body>
